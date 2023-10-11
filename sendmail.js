@@ -1,28 +1,30 @@
 const express = require('express');
+const {sub, psub} = require("./connections/init.redis");
 const app = express();
-const redis = require('redis');
-const subscribe = redis.createClient();
 const PORT = 3002;
 
 
-(async () => {
-    await subscribe.connect();
+//subscribe channel
+sub.subscribe('ordersystem');
+sub.on('message', (channel, message) => {
+    console.log(`The channel for sendmail is`, channel)
+    console.log(`The message for sendmail is`, JSON.parse(message))
+})
 
-    //subscribe channel
-    await subscribe.subscribe('ordersystem', (message, channel) => {
-        console.log(`The channel for sendmail is`, channel)
-        console.log(`The message for sendmail is`, JSON.parse(message))
-    });
+sub.on('connect', () => console.log('Redis Sub Client Connected'));
+sub.on('error', (err) => console.log('Redis Sub Client Connection Error', err));
 
-    //psubscribe channel
-    await subscribe.pSubscribe('o*', (message, channel, pattern) => {
-        console.log(`The channel for sendmail is`, channel)
-        console.log(`The message for sendmail is`, JSON.parse(message))
-    })
-})();
+//psubscribe channel
+psub.psubscribe('o*')
 
-subscribe.on('connect', () => console.log('Redis Client Connected'));
-subscribe.on('error', (err) => console.log('Redis Client Connection Error', err));
+psub.on('pmessage',  (pattern, channel, message) => {
+    console.log(`The pattern is`, pattern)
+    console.log(`The channel for sendmail is`, channel)
+    console.log(`The message for sendmail is`, JSON.parse(message))
+})
+
+psub.on('connect', () => console.log('Redis psub Client Connected'));
+psub.on('error', (err) => console.log('Redis psub Client Connection Error', err));
 
 app.listen(PORT, () => {
     console.log(`The sendmail running at port ${PORT}`)

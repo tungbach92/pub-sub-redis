@@ -1,12 +1,7 @@
 const express = require('express');
+const {pub} = require("./connections/init.redis");
 const app = express();
-const redis = require('redis');
-const publish = redis.createClient();
 const PORT = 3000;
-
-(async () => {
-    await publish.connect();
-})()
 
 app.get('/order', async (req, res) => {
     const order = [
@@ -21,7 +16,7 @@ app.get('/order', async (req, res) => {
     ]
 
     //Step: payment.js and send mail
-    await publish.publish('ordersystem', JSON.stringify(order))
+    pub.publish('o1212', JSON.stringify(order))
 
     res.json({
         status: 200,
@@ -30,8 +25,8 @@ app.get('/order', async (req, res) => {
 })
 
 
-publish.on('connect', () => console.log('Redis Client Connected'));
-publish.on('error', (err) => console.log('Redis Client Connection Error', err));
+pub.on('connect', () => console.log('Redis Client Connected'));
+pub.on('error', (err) => console.log('Redis Client Connection Error', err));
 
 app.listen(PORT, () => {
     console.log(`The order running at port ${PORT}`)
